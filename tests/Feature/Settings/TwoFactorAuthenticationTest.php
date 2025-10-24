@@ -25,13 +25,15 @@ class TwoFactorAuthenticationTest extends TestCase
 
         $user = User::factory()->withoutTwoFactor()->create();
 
-        $this->actingAs($user)
+        $response = $this->actingAs($user)
             ->withSession(['auth.password_confirmed_at' => time()])
-            ->get(route('two-factor.show'))
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('settings/TwoFactor')
-                ->where('twoFactorEnabled', false)
-            );
+            ->get(route('two-factor.show'));
+            
+        $response->assertStatus(200);
+        $this->assertInertia(function (AssertableInertia $page) {
+            return $page->component('settings/TwoFactor')
+                ->where('twoFactorEnabled', false);
+        });
     }
 
     public function test_two_factor_settings_page_requires_password_confirmation_when_enabled()
@@ -66,12 +68,13 @@ class TwoFactorAuthenticationTest extends TestCase
             'confirmPassword' => false,
         ]);
 
-        $this->actingAs($user)
-            ->get(route('two-factor.show'))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('settings/TwoFactor')
-            );
+        $response = $this->actingAs($user)
+            ->get(route('two-factor.show'));
+            
+        $response->assertStatus(200);
+        $this->assertInertia(function (AssertableInertia $page) {
+            return $page->component('settings/TwoFactor');
+        });
     }
 
     public function test_two_factor_settings_page_returns_forbidden_response_when_two_factor_is_disabled()
